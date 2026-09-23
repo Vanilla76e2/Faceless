@@ -6,10 +6,16 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
+    <ApplicationIcon>Assets\faceless-icon-circle.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="PDFsharp" Version="6.2.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="Assets\faceless-icon-circle.ico" />
+    <Resource Include="Assets\faceless-icon-circle.ico" />
   </ItemGroup>
 
 </Project>

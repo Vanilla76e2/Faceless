@@ -3,12 +3,14 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:Faceless"
         mc:Ignorable="d"
-        Title="Faceless — удаление авторов из метаданных"
-        Height="620" Width="700"
-        MinHeight="480" MinWidth="500"
+        Title="Faceless"
+        Height="720" Width="780"
+        MinHeight="520" MinWidth="640"
         Background="#1E1E2E"
-        WindowStartupLocation="CenterScreen">
+        WindowStartupLocation="CenterScreen"
+        Icon="Assets/faceless-icon-circle.ico">
 
     <Window.Resources>
         <!-- Стиль кнопки -->
@@ -121,6 +123,71 @@
             </Setter>
         </Style>
 
+        <Style x:Key="ModeButton" TargetType="Button" BasedOn="{StaticResource GhostButton}">
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Padding" Value="14,7"/>
+            <Setter Property="MinWidth" Value="180"/>
+        </Style>
+
+        <Style x:Key="MetaTextBox" TargetType="TextBox">
+            <Setter Property="Background" Value="#1E1E2E"/>
+            <Setter Property="Foreground" Value="#E5E7EB"/>
+            <Setter Property="BorderBrush" Value="#374151"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CaretBrush" Value="White"/>
+            <Setter Property="SelectionBrush" Value="#7C3AED"/>
+            <Setter Property="Padding" Value="8,5"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="TextWrapping" Value="Wrap"/>
+            <Setter Property="AcceptsReturn" Value="True"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Style.Triggers>
+                <Trigger Property="IsReadOnly" Value="True">
+                    <Setter Property="Foreground" Value="#9CA3AF"/>
+                    <Setter Property="Background" Value="#161622"/>
+                </Trigger>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="BorderBrush" Value="#7C3AED"/>
+                </Trigger>
+                <Trigger Property="IsFocused" Value="True">
+                    <Setter Property="BorderBrush" Value="#7C3AED"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <DataTemplate DataType="{x:Type local:MetadataGroupHeader}">
+            <TextBlock Text="{Binding Title}"
+                       FontSize="11"
+                       FontWeight="SemiBold"
+                       Foreground="#A78BFA"
+                       Margin="2,14,0,4"/>
+        </DataTemplate>
+
+        <DataTemplate DataType="{x:Type local:MetadataField}">
+            <Grid Margin="0,3,8,3">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="190"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <StackPanel VerticalAlignment="Center" Margin="0,0,10,0">
+                    <TextBlock Text="{Binding Name}"
+                               FontSize="12"
+                               Foreground="#E5E7EB"
+                               TextWrapping="Wrap"/>
+                    <TextBlock Text="{Binding TechnicalName}"
+                               FontSize="10"
+                               Foreground="#4B5563"
+                               TextWrapping="Wrap"
+                               Margin="0,1,0,0"/>
+                </StackPanel>
+                <TextBox Grid.Column="1"
+                         Text="{Binding Value, UpdateSourceTrigger=PropertyChanged}"
+                         IsReadOnly="{Binding IsReadOnly}"
+                         ToolTip="{Binding ToolTipText}"
+                         Style="{StaticResource MetaTextBox}"/>
+            </Grid>
+        </DataTemplate>
+
         <Style x:Key="FileItemStyle" TargetType="ListBoxItem">
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="Foreground" Value="#E5E7EB"/>
@@ -147,15 +214,41 @@
 
         <!-- Заголовок -->
         <StackPanel Grid.Row="0" Margin="0,0,0,16">
-            <TextBlock Text="Faceless"
-                       FontSize="24" FontWeight="Bold"
-                       Foreground="#A78BFA"/>
-            <TextBlock Text="Удаляет информацию об авторах из метаданных файлов"
-                       FontSize="12" Foreground="#6B7280" Margin="0,2,0,0"/>
+            <StackPanel Orientation="Horizontal">
+                <Viewbox Width="30" Height="40" Margin="0,0,12,0" VerticalAlignment="Center">
+                    <Canvas Width="195" Height="257">
+                        <Path Fill="#A78BFA" Data="{StaticResource FacelessGlyph}">
+                            <Path.RenderTransform>
+                                <TranslateTransform X="-157.45" Y="-122.02"/>
+                            </Path.RenderTransform>
+                        </Path>
+                    </Canvas>
+                </Viewbox>
+                <StackPanel VerticalAlignment="Center">
+                    <TextBlock Text="Faceless"
+                               FontSize="24" FontWeight="Bold"
+                               Foreground="#A78BFA"/>
+                    <TextBlock x:Name="SubtitleText"
+                               Text="Удаляет информацию об авторах из метаданных файлов"
+                               FontSize="12" Foreground="#6B7280" Margin="0,2,0,0"/>
+                </StackPanel>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" Margin="0,14,0,0">
+                <Button x:Name="ModeCleanButton"
+                        Content="Очистка авторов"
+                        Style="{StaticResource ModeButton}"
+                        Click="CleanMode_Click"/>
+                <Button x:Name="ModeEditButton"
+                        Content="Редактор метаданных"
+                        Style="{StaticResource ModeButton}"
+                        Margin="8,0,0,0"
+                        Click="EditMode_Click"/>
+            </StackPanel>
         </StackPanel>
 
         <!-- Панель настроек вывода -->
-        <Border Grid.Row="1"
+        <Border x:Name="OutputSettingsBorder"
+                Grid.Row="1"
                 Background="#13131F"
                 BorderBrush="#374151"
                 BorderThickness="1"
@@ -336,6 +429,83 @@
                     </TextBlock.Style>
                 </TextBlock>
             </Grid>
+
+            <Grid x:Name="EditPanel" Visibility="Collapsed">
+                <Grid x:Name="EditorPlaceholder">
+                    <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center"
+                                IsHitTestVisible="False">
+                        <TextBlock Text="⬇" FontSize="40"
+                                   HorizontalAlignment="Center"
+                                   Foreground="#4B5563"/>
+                        <TextBlock Text="Перетащите файл сюда"
+                                   FontSize="16" FontWeight="SemiBold"
+                                   Foreground="#6B7280"
+                                   HorizontalAlignment="Center"
+                                   Margin="0,12,0,4"/>
+                        <TextBlock Text="чтобы посмотреть и изменить метаданные"
+                                   FontSize="12" Foreground="#4B5563"
+                                   HorizontalAlignment="Center"/>
+                        <TextBlock x:Name="EditorMessage"
+                                   Text=""
+                                   FontSize="12" Foreground="#F87171"
+                                   HorizontalAlignment="Center"
+                                   TextWrapping="Wrap"
+                                   MaxWidth="420"
+                                   Margin="0,12,0,0"/>
+                        <TextBlock Text="DOCX · XLSX · PPTX · PDF · JPEG · PNG · TIFF"
+                                   FontSize="11" Foreground="#374151"
+                                   HorizontalAlignment="Center"
+                                   Margin="0,12,0,0"/>
+                    </StackPanel>
+                </Grid>
+
+                <Grid x:Name="EditorFieldsPanel" Visibility="Collapsed">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <Grid Grid.Row="0" Margin="14,12,14,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel>
+                            <TextBlock x:Name="EditorFileName"
+                                       FontSize="14" FontWeight="SemiBold"
+                                       Foreground="#E5E7EB"
+                                       TextTrimming="CharacterEllipsis"/>
+                            <TextBlock x:Name="EditorFileMeta"
+                                       FontSize="11" Foreground="#6B7280"
+                                       Margin="0,2,0,0"/>
+                        </StackPanel>
+                        <TextBlock Grid.Column="1"
+                                   Text="Другой файл"
+                                   FontSize="11" Foreground="#6B7280"
+                                   Cursor="Hand"
+                                   VerticalAlignment="Center"
+                                   MouseLeftButtonUp="ReplaceEditorFile_Click">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Style.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter Property="Foreground" Value="#A78BFA"/>
+                                        </Trigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                    </Grid>
+
+                    <ScrollViewer x:Name="MetadataScroll"
+                                  Grid.Row="1"
+                                  VerticalScrollBarVisibility="Auto"
+                                  HorizontalScrollBarVisibility="Disabled"
+                                  Margin="12,4,4,8">
+                        <ItemsControl x:Name="MetadataItems"/>
+                    </ScrollViewer>
+                </Grid>
+            </Grid>
             </Grid>
         </Border>
 
@@ -364,6 +534,8 @@
                        VerticalAlignment="Center"
                        Foreground="#6B7280"
                        FontSize="12"
+                       TextTrimming="CharacterEllipsis"
+                       Margin="0,0,12,0"
                        Text="Файлов не выбрано"/>
 
             <!-- Очистить -->
@@ -379,6 +551,7 @@
             <Button x:Name="ProcessButton"
                     Grid.Column="2"
                     Content="Удалить авторов"
+                    MinWidth="160"
                     Style="{StaticResource PrimaryButton}"
                     IsEnabled="False"
                     Click="ProcessButton_Click"/>
